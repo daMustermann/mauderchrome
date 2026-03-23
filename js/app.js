@@ -73,6 +73,7 @@ import {
     SVG_RESET,
 } from './icons.js';
 import { HiFiClient } from './HiFi.js';
+import { RealtimeSyncClient, getRealtimeSyncConfig } from './realtime-sync.js';
 
 // Capture real iOS state before spoofing (needed for background audio)
 if (typeof window !== 'undefined') {
@@ -419,6 +420,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const currentQuality = localStorage.getItem('playback-quality') || 'HI_RES_LOSSLESS';
     await Player.initialize(audioPlayer, MusicAPI.instance, currentQuality);
+
+    const realtimeSyncConfig = getRealtimeSyncConfig();
+    if (realtimeSyncConfig.enabled && realtimeSyncConfig.wsUrl) {
+        const realtimeSyncClient = new RealtimeSyncClient(Player.instance);
+        realtimeSyncClient.start();
+        window.monochromeRealtimeSyncClient = realtimeSyncClient;
+    }
 
     // Initialize tracker
     initTracker();
@@ -1440,7 +1448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const folderId = window.location.pathname.split('/')[2];
             if (folderId && confirm('Are you sure you want to delete this folder?')) {
                 await db.deleteFolder(folderId);
-                // Sync deletion to cloud
+                // Sync deletion to server
                 await syncManager.syncUserFolder({ id: folderId }, 'delete');
                 navigate('/library');
             }
@@ -2889,7 +2897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (hasProfile) {
                     headerAccountDropdown.innerHTML = `
                         <button class="btn-secondary" id="header-view-profile">My Profile</button>
-                        <button class="btn-secondary danger" id="header-sign-out">Sign Out</button>
+                        <button class="btn-secondary" id="header-instance-user">Instance User</button>
                     `;
                     document.getElementById('header-view-profile').onclick = () => {
                         navigate(`/user/@${data.profile.username}`);
@@ -2898,7 +2906,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     headerAccountDropdown.innerHTML = `
                         <button class="btn-primary" id="header-create-profile">Create Profile</button>
-                        <button class="btn-secondary danger" id="header-sign-out">Sign Out</button>
+                        <button class="btn-secondary" id="header-instance-user">Instance User</button>
                     `;
                     document.getElementById('header-create-profile').onclick = () => {
                         openEditProfile();
@@ -2906,7 +2914,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
                 }
 
-                document.getElementById('header-sign-out').onclick = () => authManager.signOut();
+                document.getElementById('header-instance-user').onclick = async () => {
+                    await authManager.signInWithUsername();
+                    headerAccountDropdown.classList.remove('active');
+                };
             }
         }
 

@@ -98,7 +98,7 @@ export class MusicDatabase {
     }
 
     // History API
-    async addToHistory(track) {
+    async addToHistory(track, options = {}) {
         const storeName = 'history_tracks';
         const minified = this._minifyItem(track.type || 'track', track);
         const timestamp = Date.now();
@@ -128,8 +128,16 @@ export class MusicDatabase {
                 // If cursor fails, just try to put (fallback)
                 store.put(entry);
             };
-
-            transaction.oncomplete = () => resolve(entry);
+            transaction.oncomplete = () => {
+                if (!options.silentSync) {
+                    window.dispatchEvent(
+                        new CustomEvent('sync-history-change', {
+                            detail: { action: 'add', track: entry },
+                        })
+                    );
+                }
+                resolve(entry);
+            };
             transaction.onerror = (e) => reject(e.target.error);
         });
     }
@@ -165,7 +173,7 @@ export class MusicDatabase {
     }
 
     // Favorites API
-    async toggleFavorite(type, item) {
+    async toggleFavorite(type, item, options = {}) {
         const plural = type === 'mix' ? 'mixes' : `${type}s`;
         const storeName = `favorites_${plural}`;
         const key = type === 'playlist' ? item.uuid : item.id;
@@ -174,12 +182,26 @@ export class MusicDatabase {
         if (exists) {
             await this.performTransaction(storeName, 'readwrite', (store) => store.delete(key));
             window.dispatchEvent(new CustomEvent('favorites-changed'));
+            if (!options.silentSync) {
+                window.dispatchEvent(
+                    new CustomEvent('sync-favorite-change', {
+                        detail: { action: 'remove', type, key, item },
+                    })
+                );
+            }
             return false; // Removed
         } else {
             const minified = this._minifyItem(type, item);
             const entry = { ...minified, addedAt: Date.now() };
             await this.performTransaction(storeName, 'readwrite', (store) => store.put(entry));
             window.dispatchEvent(new CustomEvent('favorites-changed'));
+            if (!options.silentSync) {
+                window.dispatchEvent(
+                    new CustomEvent('sync-favorite-change', {
+                        detail: { action: 'add', type, key, item: entry },
+                    })
+                );
+            }
             return true; // Added
         }
     }
@@ -466,7 +488,16 @@ export class MusicDatabase {
         const db = await this.open();
 
         const importStore = async (storeName, items) => {
-            if (items === undefined) return false;
+            if (items === undefined) {
+                if (!clear) return false;
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    store.clear();
+                    transaction.oncomplete = () => resolve(true);
+                    transaction.onerror = () => reject(transaction.error);
+                });
+            }
 
             let itemsArray = Array.isArray(items) ? items : Object.values(items || {});
 
@@ -590,7 +621,8 @@ export class MusicDatabase {
         return playlist;
     }
 
-    _dispatchPlaylistSync(action, playlist) {
+    _dispatchPlaylistSync(action, playlist, options = {}) {
+        if (options.silentSync) return;
         window.dispatchEvent(
             new CustomEvent('sync-playlist-change', {
                 detail: { action, playlist },
@@ -599,7 +631,7 @@ export class MusicDatabase {
     }
 
     // User Playlists API
-    async createPlaylist(name, tracks = [], cover = '', description = '') {
+    async createPlaylist(name, tracks = [], cover = '', description = '', options = {}) {
         const id = crypto.randomUUID();
         const playlist = {
             id: id,
@@ -616,13 +648,13 @@ export class MusicDatabase {
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
 
         // TRIGGER SYNC
-        this._dispatchPlaylistSync('create', playlist);
+        this._dispatchPlaylistSync('create', playlist, options);
         window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
 
         return playlist;
     }
 
-    async addTrackToPlaylist(playlistId, track) {
+    async addTrackToPlaylist(playlistId, track, options = {}) {
         const playlist = await this.performTransaction('user_playlists', 'readonly', (store) => store.get(playlistId));
         if (!playlist) throw new Error('Playlist not found');
         playlist.tracks = playlist.tracks || [];
@@ -634,13 +666,13 @@ export class MusicDatabase {
         this._updatePlaylistMetadata(playlist);
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
 
-        this._dispatchPlaylistSync('update', playlist);
+        this._dispatchPlaylistSync('update', playlist, options);
         window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
 
         return playlist;
     }
 
-    async addTracksToPlaylist(playlistId, tracks) {
+    async addTracksToPlaylist(playlistId, tracks, options = {}) {
         const playlist = await this.performTransaction('user_playlists', 'readonly', (store) => store.get(playlistId));
         if (!playlist) throw new Error('Playlist not found');
         playlist.tracks = playlist.tracks || [];
@@ -658,14 +690,14 @@ export class MusicDatabase {
             playlist.updatedAt = Date.now();
             this._updatePlaylistMetadata(playlist);
             await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
-            this._dispatchPlaylistSync('update', playlist);
+            this._dispatchPlaylistSync('update', playlist, options);
             window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
         }
 
         return playlist;
     }
 
-    async removeTrackFromPlaylist(playlistId, trackId, trackType = null) {
+    async removeTrackFromPlaylist(playlistId, trackId, trackType = null, options = {}) {
         const playlist = await this.performTransaction('user_playlists', 'readonly', (store) => store.get(playlistId));
         if (!playlist) throw new Error('Playlist not found');
         playlist.tracks = playlist.tracks || [];
@@ -679,17 +711,17 @@ export class MusicDatabase {
         this._updatePlaylistMetadata(playlist);
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
 
-        this._dispatchPlaylistSync('update', playlist);
+        this._dispatchPlaylistSync('update', playlist, options);
         window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
 
         return playlist;
     }
 
-    async deletePlaylist(playlistId) {
+    async deletePlaylist(playlistId, options = {}) {
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.delete(playlistId));
 
         // TRIGGER SYNC (but for deleting)
-        this._dispatchPlaylistSync('delete', { id: playlistId });
+        this._dispatchPlaylistSync('delete', { id: playlistId }, options);
         window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
     }
 
@@ -697,12 +729,12 @@ export class MusicDatabase {
         return await this.performTransaction('user_playlists', 'readonly', (store) => store.get(playlistId));
     }
 
-    async updatePlaylist(playlist) {
+    async updatePlaylist(playlist, options = {}) {
         playlist.updatedAt = Date.now();
         this._updatePlaylistMetadata(playlist);
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
 
-        this._dispatchPlaylistSync('update', playlist);
+        this._dispatchPlaylistSync('update', playlist, options);
 
         return playlist;
     }
@@ -828,14 +860,14 @@ export class MusicDatabase {
         return playlist;
     }
 
-    async updatePlaylistDescription(playlistId, newDescription) {
+    async updatePlaylistDescription(playlistId, newDescription, options = {}) {
         const playlist = await this.performTransaction('user_playlists', 'readonly', (store) => store.get(playlistId));
         if (!playlist) throw new Error('Playlist not found');
         playlist.description = newDescription;
         playlist.updatedAt = Date.now();
         await this.performTransaction('user_playlists', 'readwrite', (store) => store.put(playlist));
 
-        this._dispatchPlaylistSync('update', playlist);
+        this._dispatchPlaylistSync('update', playlist, options);
 
         return playlist;
     }
@@ -880,6 +912,20 @@ export class MusicDatabase {
 
     async getSetting(key) {
         return await this.performTransaction('settings', 'readonly', (store) => store.get(key));
+    }
+
+    async applySyncedPlaylistChange(action, playlist) {
+        if (!playlist) return;
+
+        if (action === 'delete') {
+            await this.deletePlaylist(playlist.id, { silentSync: true });
+            return;
+        }
+
+        if (action === 'create' || action === 'update') {
+            await this.updatePlaylist(playlist, { silentSync: true });
+            window.dispatchEvent(new CustomEvent('playlist-tracks-changed'));
+        }
     }
 }
 

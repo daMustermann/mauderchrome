@@ -852,41 +852,6 @@
             </div>
         </div>
 
-        <div id="email-auth-modal" class="modal">
-            <div class="modal-overlay"></div>
-            <div class="modal-content">
-                <h3 style="text-align: center; margin-bottom: 10px">Email Authentication</h3>
-                <input
-                    type="email"
-                    id="auth-email"
-                    class="template-input"
-                    placeholder="Email Address"
-                    style="margin-bottom: 0.5rem"
-                />
-                <input
-                    type="password"
-                    id="auth-password"
-                    class="template-input"
-                    placeholder="Password"
-                    style="margin-bottom: 1rem"
-                />
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px">
-                    <button id="email-signin-btn" class="btn-primary" style="flex: 1">Sign In</button>
-                    <button id="email-signup-btn" class="btn-secondary" style="flex: 1">Sign Up</button>
-                </div>
-                <button
-                    id="reset-password-btn"
-                    class="btn-secondary"
-                    style="width: 100%; margin-top: 10px; font-size: 0.9rem"
-                >
-                    Forgot Password?
-                </button>
-                <button id="cancel-email-auth-btn" class="btn-secondary" style="width: 100%; margin-top: 10px">
-                    Cancel
-                </button>
-            </div>
-        </div>
-
         <div id="playlist-select-modal" class="modal">
             <div class="modal-overlay"></div>
             <div class="modal-content">
@@ -1062,7 +1027,7 @@
             <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem">
-                    <h3 style="margin: 0">Custom Database/Auth</h3>
+                    <h3 style="margin: 0">Custom Sync Backend</h3>
                     <button
                         id="custom-db-reset"
                         class="btn-secondary danger"
@@ -1072,7 +1037,7 @@
                     </button>
                 </div>
                 <p style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 1rem">
-                    Configure custom PocketBase and Appwrite instances. Leave empty to use defaults.
+                    Configure a custom PocketBase instance. Leave empty to use defaults.
                     <br />
                     A Guide To Set This Up Can Be Found
                     <a
@@ -1084,24 +1049,6 @@
                 <div style="margin-bottom: 1rem">
                     <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">PocketBase URL</label>
                     <input type="url" id="custom-pb-url" class="template-input" placeholder="https://data.samidy.xyz" />
-                </div>
-                <div style="margin-bottom: 1rem">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">Appwrite Endpoint</label>
-                    <input
-                        type="url"
-                        id="custom-appwrite-endpoint"
-                        class="template-input"
-                        placeholder="https://auth.samidy.com/v1"
-                    />
-                </div>
-                <div style="margin-bottom: 1rem">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">Appwrite Project ID</label>
-                    <input
-                        type="text"
-                        id="custom-appwrite-project"
-                        class="template-input"
-                        placeholder="auth-for-monochrome"
-                    />
                 </div>
                 <div class="modal-actions">
                     <button id="custom-db-cancel" class="btn-secondary">Cancel</button>
@@ -1244,7 +1191,7 @@
                         "
                     >
                         <p>You need to be logged in to upload themes.</p>
-                        <button class="btn-primary" id="theme-store-login-btn">Go to Login</button>
+                        <button class="btn-primary" id="theme-store-login-btn">Set Instance User</button>
                     </div>
                     <form id="theme-upload-form">
                         <div style="margin-bottom: 1rem">
@@ -4231,10 +4178,8 @@
                             <div class="settings-group">
                                 <div class="setting-item">
                                     <div class="info">
-                                        <span class="label">ADVANCED: Custom Database/Auth</span>
-                                        <span class="description"
-                                            >Configure custom PocketBase and Appwrite instances</span
-                                        >
+                                        <span class="label">ADVANCED: Custom Sync Backend</span>
+                                        <span class="description">Configure a custom PocketBase backend</span>
                                     </div>
                                     <button id="custom-db-btn" class="btn-secondary">Configure</button>
                                 </div>
@@ -4305,20 +4250,20 @@
                                     <div class="info">
                                         <span class="label">Reset Local Data</span>
                                         <span class="description"
-                                            >Clear all local storage and cached data (does not affect cloud sync)</span
+                                            >Clear all local storage and cached data (does not affect server data)</span
                                         >
                                     </div>
                                     <button id="reset-local-data-btn" class="btn-secondary danger">Reset</button>
                                 </div>
                                 <div class="setting-item">
                                     <div class="info">
-                                        <span class="label">Clear Cloud Data</span>
+                                        <span class="label">Clear Server Data</span>
                                         <span class="description"
-                                            >Delete all your data from the cloud (cannot be undone)</span
+                                            >Delete all your data from the server (cannot be undone)</span
                                         >
                                     </div>
-                                    <button id="auth-clear-cloud-btn" class="btn-secondary danger">
-                                        Clear Cloud Data
+                                    <button id="auth-clear-server-btn" class="btn-secondary danger">
+                                        Clear Server Data
                                     </button>
                                 </div>
                             </div>
@@ -4470,10 +4415,10 @@
                     </div>
                 </div>
                 <div id="page-account" class="page">
-                    <h2 class="section-title" style="text-align: center">Sign Up / Sign In</h2>
+                    <h2 class="section-title" style="text-align: center">Single-User Instance</h2>
                     <div class="account-content">
                         <p style="text-align: center" class="account-description">
-                            Make an account to allow syncing your library between devices.
+                            This app runs in single-user mode per instance.
                         </p>
                         <div
                             class="account-buttons"
@@ -4487,26 +4432,22 @@
                                 flex-wrap: wrap;
                             "
                         >
-                            <button id="auth-connect-btn" class="btn-secondary">Connect with Google</button>
-                            <button id="toggle-email-auth-btn" class="btn-secondary">Connect with Email</button>
+                            <button id="auth-connect-btn" class="btn-secondary">Set Instance User</button>
                             <button id="view-my-profile-btn" class="btn-secondary" style="display: none">
                                 View My Profile
                             </button>
                         </div>
 
                         <p id="auth-status" style="text-align: center; padding-top: 15px; color: #8b8b93">
-                            Sync your library across devices
+                            Single-user mode active
                         </p>
                         <p style="padding-top: 50px; text-align: center; color: #8b8b93">
-                            We only store music data and a randomized ID to find out which Google/Email account is
-                            which.
+                            No multiuser login and no password flow.
                             <br />
-                            All data is anonymous. We do not store anything like emails, usernames, or anything
-                            sensitive. <br />
+                            One local user identity controls this instance. <br />
                         </p>
                         <p style="padding-top: 50px; text-align: center; color: #8b8b93">
-                            However, if you want complete control over your data, we allow you to use your own Database
-                            Configuration.
+                            For full control you can connect your own PocketBase backend.
                         </p>
                         <div
                             style="
@@ -4699,7 +4640,6 @@
                 </div>
             </footer>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.3/dist/pocketbase.umd.js"></script>
         <script type="module" src="/js/app.js"></script>
     </body>
 </html>

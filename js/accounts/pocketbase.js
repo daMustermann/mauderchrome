@@ -8,14 +8,12 @@ const PUBLIC_COLLECTION = 'public_playlists';
 const DEFAULT_POCKETBASE_URL = 'https://data.samidy.xyz';
 const POCKETBASE_URL =
     window.__POCKETBASE_URL__ || localStorage.getItem('monochrome-pocketbase-url') || DEFAULT_POCKETBASE_URL;
+const BACKEND_USER_KEY_STORAGE = 'monochrome-backend-user-key';
+const DEFAULT_BACKEND_USER_KEY = 'single-user-instance';
 
-// Determine whether local sync should be used (prevents remote network calls in dev/local)
-const useLocalSync =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    window.location.protocol === 'file:' ||
-    localStorage.getItem('monochrome-local-accounts') === '1' ||
-    !!window.__LOCAL_ACCOUNTS__;
+// Local sync mode is now opt-in only.
+// This keeps Android/Capacitor and localhost browser clients eligible for persistent backend sync.
+const useLocalSync = localStorage.getItem('monochrome-local-accounts') === '1' || !!window.__LOCAL_ACCOUNTS__;
 
 if (useLocalSync) {
     console.log('[PocketBase] Local sync mode active — remote PocketBase disabled');
@@ -32,7 +30,17 @@ const pbSyncManager = {
     _getUserRecordPromise: null,
     _isSyncing: false,
 
+    _resolveBackendUid(_uid = null) {
+        const stored = (localStorage.getItem(BACKEND_USER_KEY_STORAGE) || '').trim();
+        const normalized = (stored || DEFAULT_BACKEND_USER_KEY).toLowerCase().replace(/[^a-z0-9._-]/g, '-');
+        if (normalized !== stored) {
+            localStorage.setItem(BACKEND_USER_KEY_STORAGE, normalized);
+        }
+        return normalized;
+    },
+
     async _getUserRecord(uid) {
+        uid = this._resolveBackendUid(uid);
         if (!uid) return null;
 
         if (this._userRecordCache && this._userRecordCache.firebase_id === uid) {
@@ -58,9 +66,12 @@ const pbSyncManager = {
                 }
 
                 try {
+                    const fallbackUsername = authManager.user?.username || 'owner';
                     const newRecord = await this.pb.collection('DB_users').create(
                         {
                             firebase_id: uid,
+                            username: fallbackUsername,
+                            display_name: fallbackUsername,
                             library: {},
                             history: [],
                             user_playlists: {},
@@ -98,7 +109,7 @@ const pbSyncManager = {
         const user = authManager.user;
         if (!user) return null;
 
-        const record = await this._getUserRecord(user.$id);
+        const record = await this._getUserRecord();
         if (!record) return null;
 
         const library = this.safeParseInternal(record.library, 'library', {});
@@ -108,8 +119,8 @@ const pbSyncManager = {
         const favoriteAlbums = this.safeParseInternal(record.favorite_albums, 'favorite_albums', []);
 
         const profile = {
-            username: record.username,
-            display_name: record.display_name,
+            username: record.username || user.username || 'owner',
+            display_name: record.display_name || record.username || user.username || 'owner',
             avatar_url: record.avatar_url,
             banner: record.banner,
             status: record.status,
@@ -124,6 +135,7 @@ const pbSyncManager = {
     },
 
     async _updateUserJSON(uid, field, data) {
+        uid = this._resolveBackendUid(uid);
         const record = await this._getUserRecord(uid);
         if (!record) {
             console.error('Cannot update: no user record found');
@@ -184,7 +196,8 @@ const pbSyncManager = {
         const user = authManager.user;
         if (!user) return;
 
-        const record = await this._getUserRecord(user.$id);
+        const backendUid = this._resolveBackendUid();
+        const record = await this._getUserRecord(backendUid);
         if (!record) return;
 
         let library = this.safeParseInternal(record.library, 'library', {});
@@ -202,7 +215,7 @@ const pbSyncManager = {
             delete library[pluralType][key];
         }
 
-        await this._updateUserJSON(user.$id, 'library', library);
+        await this._updateUserJSON(backendUid, 'library', library);
     },
 
     _minifyItem(type, item) {
@@ -312,27 +325,29 @@ const pbSyncManager = {
         const user = authManager.user;
         if (!user) return;
 
-        const record = await this._getUserRecord(user.$id);
+        const backendUid = this._resolveBackendUid();
+        const record = await this._getUserRecord(backendUid);
         if (!record) return;
 
         let history = this.safeParseInternal(record.history, 'history', []);
 
         const newHistory = [historyEntry, ...history].slice(0, 100);
-        await this._updateUserJSON(user.$id, 'history', newHistory);
+        await this._updateUserJSON(backendUid, 'history', newHistory);
     },
 
     async clearHistory() {
         const user = authManager.user;
         if (!user) return;
 
-        await this._updateUserJSON(user.$id, 'history', []);
+        await this._updateUserJSON(this._resolveBackendUid(), 'history', []);
     },
 
     async syncUserPlaylist(playlist, action) {
         const user = authManager.user;
         if (!user) return;
 
-        const record = await this._getUserRecord(user.$id);
+        const backendUid = this._resolveBackendUid();
+        const record = await this._getUserRecord(backendUid);
         if (!record) return;
 
         let userPlaylists = this.safeParseInternal(record.user_playlists, 'user_playlists', {});
@@ -358,14 +373,15 @@ const pbSyncManager = {
             }
         }
 
-        await this._updateUserJSON(user.$id, 'user_playlists', userPlaylists);
+        await this._updateUserJSON(backendUid, 'user_playlists', userPlaylists);
     },
 
     async syncUserFolder(folder, action) {
         const user = authManager.user;
         if (!user) return;
 
-        const record = await this._getUserRecord(user.$id);
+        const backendUid = this._resolveBackendUid();
+        const record = await this._getUserRecord(backendUid);
         if (!record) return;
 
         let userFolders = this.safeParseInternal(record.user_folders, 'user_folders', {});
@@ -383,8 +399,96 @@ const pbSyncManager = {
             };
         }
 
-        await this._updateUserJSON(user.$id, 'user_folders', userFolders);
+        await this._updateUserJSON(backendUid, 'user_folders', userFolders);
     },
+
+    async replaceServerDataWithLocalData() {
+        const user = authManager.user;
+        if (!user) return false;
+
+        let database = db;
+        if (typeof database === 'function') {
+            database = await database();
+        } else {
+            database = await database;
+        }
+
+        const localData = {
+            tracks: (await database.getAll('favorites_tracks')) || [],
+            albums: (await database.getAll('favorites_albums')) || [],
+            artists: (await database.getAll('favorites_artists')) || [],
+            playlists: (await database.getAll('favorites_playlists')) || [],
+            mixes: (await database.getAll('favorites_mixes')) || [],
+            history: (await database.getAll('history_tracks')) || [],
+            userPlaylists: (await database.getAll('user_playlists')) || [],
+            userFolders: (await database.getAll('user_folders')) || [],
+        };
+
+        const library = { tracks: {}, albums: {}, artists: {}, playlists: {}, mixes: {} };
+
+        for (const item of localData.tracks) {
+            const minified = this._minifyItem('track', item);
+            if (minified?.id != null) library.tracks[minified.id] = minified;
+        }
+        for (const item of localData.albums) {
+            const minified = this._minifyItem('album', item);
+            if (minified?.id != null) library.albums[minified.id] = minified;
+        }
+        for (const item of localData.artists) {
+            const minified = this._minifyItem('artist', item);
+            if (minified?.id != null) library.artists[minified.id] = minified;
+        }
+        for (const item of localData.playlists) {
+            const minified = this._minifyItem('playlist', item);
+            const key = minified?.uuid || minified?.id;
+            if (key != null) library.playlists[key] = minified;
+        }
+        for (const item of localData.mixes) {
+            const minified = this._minifyItem('mix', item);
+            if (minified?.id != null) library.mixes[minified.id] = minified;
+        }
+
+        const userPlaylists = {};
+        for (const playlist of localData.userPlaylists) {
+            if (!playlist?.id) continue;
+            userPlaylists[playlist.id] = {
+                id: playlist.id,
+                name: playlist.name,
+                cover: playlist.cover || null,
+                tracks: playlist.tracks ? playlist.tracks.map((t) => this._minifyItem(t.type || 'track', t)) : [],
+                createdAt: playlist.createdAt || Date.now(),
+                updatedAt: playlist.updatedAt || Date.now(),
+                numberOfTracks: playlist.tracks ? playlist.tracks.length : 0,
+                images: playlist.images || [],
+                isPublic: playlist.isPublic || false,
+            };
+        }
+
+        const userFolders = {};
+        for (const folder of localData.userFolders) {
+            if (!folder?.id) continue;
+            userFolders[folder.id] = {
+                id: folder.id,
+                name: folder.name,
+                cover: folder.cover || null,
+                playlists: folder.playlists || [],
+                createdAt: folder.createdAt || Date.now(),
+                updatedAt: folder.updatedAt || Date.now(),
+            };
+        }
+
+        const history = [...localData.history].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 100);
+
+        const backendUid = this._resolveBackendUid();
+        await this._getUserRecord(backendUid);
+        await this._updateUserJSON(backendUid, 'library', library);
+        await this._updateUserJSON(backendUid, 'user_playlists', userPlaylists);
+        await this._updateUserJSON(backendUid, 'user_folders', userFolders);
+        await this._updateUserJSON(backendUid, 'history', history);
+
+        return true;
+    },
+
 
     async getPublicPlaylist(uuid) {
         try {
@@ -456,7 +560,7 @@ const pbSyncManager = {
 
     async publishPlaylist(playlist) {
         if (!playlist || !playlist.id) return;
-        const uid = authManager.user?.$id;
+        const uid = this._resolveBackendUid();
         if (!uid) return;
 
         const data = {
@@ -496,7 +600,7 @@ const pbSyncManager = {
     },
 
     async unpublishPlaylist(uuid) {
-        const uid = authManager.user?.$id;
+        const uid = this._resolveBackendUid();
         if (!uid) return;
 
         try {
@@ -532,12 +636,13 @@ const pbSyncManager = {
     async updateProfile(data) {
         const user = authManager.user;
         if (!user) return;
-        const record = await this._getUserRecord(user.$id);
+        const backendUid = this._resolveBackendUid();
+        const record = await this._getUserRecord(backendUid);
         if (!record) return;
 
         const updateData = { ...data };
 
-        const updated = await this.pb.collection('DB_users').update(record.id, updateData, { f_id: user.$id });
+        const updated = await this.pb.collection('DB_users').update(record.id, updateData, { f_id: backendUid });
         this._userRecordCache = updated;
     },
 
@@ -550,22 +655,24 @@ const pbSyncManager = {
         }
     },
 
-    async clearCloudData() {
+    async clearServerData() {
         const user = authManager.user;
         if (!user) return;
 
         try {
-            const record = await this._getUserRecord(user.$id);
+            const backendUid = this._resolveBackendUid();
+            const record = await this._getUserRecord(backendUid);
             if (record) {
-                await this.pb.collection('DB_users').delete(record.id, { f_id: user.$id });
+                await this.pb.collection('DB_users').delete(record.id, { f_id: backendUid });
                 this._userRecordCache = null;
-                alert('Cloud data cleared successfully.');
+                alert('Server data cleared successfully.');
             }
         } catch (error) {
-            console.error('Failed to clear cloud data!', error);
-            alert('Failed to clear cloud data! :( Check console for details.');
+            console.error('Failed to clear server data!', error);
+            alert('Failed to clear server data! :( Check console for details.');
         }
     },
+
 
     async onAuthStateChanged(user) {
         if (user) {
@@ -574,9 +681,9 @@ const pbSyncManager = {
             this._isSyncing = true;
 
             try {
-                const cloudData = await this.getUserData();
+                const serverData = await this.getUserData();
 
-                if (cloudData) {
+                if (serverData) {
                     let database = db;
                     if (typeof database === 'function') {
                         database = await database();
@@ -595,7 +702,7 @@ const pbSyncManager = {
                         userFolders: (await database.getAll('user_folders')) || [],
                     };
 
-                    let { library, history, userPlaylists, userFolders } = cloudData;
+                    let { library, history, userPlaylists, userFolders } = serverData;
                     let needsUpdate = false;
 
                     if (!library) library = {};
@@ -676,10 +783,11 @@ const pbSyncManager = {
                     }
 
                     if (needsUpdate) {
-                        await this._updateUserJSON(user.$id, 'library', library);
-                        await this._updateUserJSON(user.$id, 'user_playlists', userPlaylists);
-                        await this._updateUserJSON(user.$id, 'user_folders', userFolders);
-                        await this._updateUserJSON(user.$id, 'history', history);
+                        const backendUid = this._resolveBackendUid();
+                        await this._updateUserJSON(backendUid, 'library', library);
+                        await this._updateUserJSON(backendUid, 'user_playlists', userPlaylists);
+                        await this._updateUserJSON(backendUid, 'user_folders', userFolders);
+                        await this._updateUserJSON(backendUid, 'history', history);
                     }
 
                     const convertedData = {

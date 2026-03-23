@@ -621,10 +621,19 @@ export class LosslessAPI {
         const cached = await this.cache.get('video', id);
         if (cached) return cached;
 
-        const response = await this.fetchWithRetry(`/video/?id=${id}`, {
-            type: 'streaming',
-            allowedDomains: ['api.monochrome.tf', 'arran.monochrome.tf'],
-        });
+        let response;
+        try {
+            response = await this.fetchWithRetry(`/video/?id=${id}`, {
+                type: 'streaming',
+                allowedDomains: ['api.monochrome.tf', 'arran.monochrome.tf'],
+            });
+        } catch (err) {
+            console.warn('[API] getVideo: allowedDomains fetch failed, retrying without domain restriction', err);
+            // Retry without allowedDomains as a fallback to handle custom/configured instances
+            response = await this.fetchWithRetry(`/video/?id=${id}`, {
+                type: 'streaming',
+            });
+        }
         const jsonResponse = await response.json();
 
         const data = jsonResponse.data || jsonResponse;
@@ -928,7 +937,7 @@ export class LosslessAPI {
         try {
             const searchUrl = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artistName)}&fmt=json`;
             const searchRes = await fetch(searchUrl, {
-                headers: { 'User-Agent': 'Monochrome/2.0.0 ( https://github.com/monochrome-music/monochrome )' },
+                headers: { 'User-Agent': 'mauderchrome/2.0.0 ( https://github.com/monochrome-music/monochrome )' },
             });
             const searchData = await searchRes.json();
 
@@ -939,7 +948,7 @@ export class LosslessAPI {
 
             const detailsUrl = `https://musicbrainz.org/ws/2/artist/${mbid}?inc=url-rels&fmt=json`;
             const detailsRes = await fetch(detailsUrl, {
-                headers: { 'User-Agent': 'Monochrome/2.0.0 ( https://github.com/monochrome-music/monochrome )' },
+                headers: { 'User-Agent': 'mauderchrome/2.0.0 ( https://github.com/monochrome-music/monochrome )' },
             });
             const detailsData = await detailsRes.json();
 

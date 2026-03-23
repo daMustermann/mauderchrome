@@ -102,11 +102,10 @@ export class Player {
         if (shaka.Player.isBrowserSupported()) {
             this.shakaPlayer = new shaka.Player();
             this.shakaPlayer.configure({
-                streaming: {
+                    streaming: {
                     bufferingGoal: 30,
                     rebufferingGoal: 2,
                     bufferBehind: 30,
-                    jumpLargeGaps: true,
                 },
                 abr: {
                     enabled: true,
@@ -633,6 +632,7 @@ export class Player {
     }
 
     async playVideo(video) {
+        console.log('[Player] playVideo called', video && (video.id || video.title));
         if (!video) return;
         const videoTrack = {
             ...video,
@@ -709,6 +709,7 @@ export class Player {
         const coverEl = trackInfo?.querySelector('.cover:not(#audio-player):not(#video-player)');
 
         const isVideoTrack = track.type === 'video';
+        if (isVideoTrack) console.log('[Player] playTrackFromQueue handling video', track.id, track.title);
         const activeElement = isVideoTrack ? this.video : this.audio;
         const inactiveElement = isVideoTrack ? this.audio : this.video;
         if (this.hls) {

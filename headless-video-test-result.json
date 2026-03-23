@@ -1,0 +1,32 @@
+{
+  "console": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "log",
+      "text": "[PocketBase] Local sync mode active — remote PocketBase disabled"
+    },
+    {
+      "type": "log",
+      "text": "[Butterchurn] Presets loaded, type: function"
+    },
+    {
+      "type": "log",
+      "text": "[Butterchurn] Module-level presets loaded: 58"
+    },
+    {
+      "type": "log",
+      "text": "[Settings] Butterchurn presets loaded event received"
+    }
+  ],
+  "pageErrors": [],
+  "actions": [
+    "No video card found on page"
+  ]
+}

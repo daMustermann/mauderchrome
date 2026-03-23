@@ -105,11 +105,11 @@ export async function onRequest(context) {
             if (playlist && (playlist.title || playlist.name)) {
                 const title = playlist.title || playlist.name;
                 const trackCount = playlist.numberOfTracks;
-                const description = `Playlist • ${trackCount} Tracks\nListen on Monochrome`;
+                const description = `Playlist • ${trackCount} Tracks\nListen on mauderchrome`;
                 const imageId = playlist.squareImage || playlist.image;
                 const imageUrl = imageId
                     ? api.getCoverUrl(imageId, '1080')
-                    : 'https://monochrome.samidy.com/assets/appicon.png';
+                    : 'https://mauderchrome.samidy.com/assets/appicon.png';
                 const pageUrl = new URL(request.url).href;
 
                 const metaHtml = `
@@ -121,7 +121,7 @@ export async function onRequest(context) {
                         <meta name="description" content="${description}">
                         <meta name="theme-color" content="#000000">
                         
-                        <meta property="og:site_name" content="Monochrome">
+                        <meta property="og:site_name" content="mauderchrome">
                         <meta property="og:title" content="${title}">
                         <meta property="og:description" content="${description}">
                         <meta property="og:image" content="${imageUrl}">

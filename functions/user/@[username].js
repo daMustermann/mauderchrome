@@ -23,7 +23,7 @@ export async function onRequest(context) {
             if (profile) {
                 const displayName = profile.display_name || profile.username;
                 const title = `${displayName} (@${profile.username})`;
-                let description = profile.about || `View ${displayName}'s profile on Monochrome.`;
+                let description = profile.about || `View ${displayName}'s profile on mauderchrome.`;
 
                 if (profile.status) {
                     try {
@@ -34,7 +34,7 @@ export async function onRequest(context) {
                     }
                 }
 
-                const imageUrl = profile.avatar_url || 'https://monochrome.tf/assets/appicon.png';
+                const imageUrl = profile.avatar_url || 'https://mauderchrome.tf/assets/appicon.png';
                 const bannerUrl = profile.banner || '';
                 const pageUrl = new URL(request.url).href;
 
@@ -47,7 +47,7 @@ export async function onRequest(context) {
                         <meta name="description" content="${description}">
                         <meta name="theme-color" content="#000000">
                         
-                        <meta property="og:site_name" content="Monochrome">
+                        <meta property="og:site_name" content="mauderchrome">
                         <meta property="og:title" content="${title}">
                         <meta property="og:description" content="${description}">
                         <meta property="og:image" content="${imageUrl}">

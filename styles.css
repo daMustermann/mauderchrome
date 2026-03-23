@@ -1604,6 +1604,96 @@ input[type='search']::-webkit-search-cancel-button {
     }
 }
 
+/* Modal improvements for local user dialog */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+}
+
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(6px);
+    transition: opacity var(--transition-fast);
+}
+
+.modal-content {
+    position: relative;
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    border: 1px solid var(--border);
+    padding: var(--modal-padding);
+    border-radius: var(--modal-radius);
+    width: min(92%, var(--modal-max-width-md));
+    max-height: 85vh;
+    overflow: auto;
+    box-shadow: var(--shadow-2xl);
+    transform: translateY(6px);
+    animation: pop-in var(--transition-fast) var(--ease-out-back);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.modal-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 0.45rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--foreground);
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary.danger,
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.template-input {
+    height: var(--input-height);
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--input);
+    color: var(--foreground);
+}
+
+
 .animate-spin {
     animation: spin 1s linear infinite;
 }

@@ -84,23 +84,11 @@ if (typeof window !== 'undefined') {
         },
     });
 
-    // analytics
-    const plausibleScript = document.createElement('script');
-    plausibleScript.async = true;
-    plausibleScript.src = 'https://plausible.canine.tools/js/pa-dCMvQpiD1-AJmi8o3xviO.js';
-    document.head.appendChild(plausibleScript);
-
-    window.plausible =
-        window.plausible ||
-        function () {
-            (window.plausible.q = window.plausible.q || []).push(arguments);
-        };
-    window.plausible.init =
-        window.plausible.init ||
-        function (i) {
-            window.plausible.o = i || {};
-        };
-    window.plausible.init();
+    // analytics disabled for local-only mode to avoid remote network calls
+    // Plausible script removed — no-op placeholder
+    window.plausible = window.plausible || function () {
+        (window.plausible.q = window.plausible.q || []).push(arguments);
+    };
 }
 
 // Lazy-loaded modules
@@ -396,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', () => hapticLight(), { capture: true });
 
     // Initialize analytics
-    initAnalytics();
+    // analytics disabled
 
     new ThemeStore();
     await HiFiClient.initialize();
@@ -2863,15 +2851,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             headerAccountDropdown.innerHTML = '';
 
             if (!user) {
+                // Always show the local username-only option in the header dropdown
                 headerAccountDropdown.innerHTML = `
-                    <button class="btn-secondary" id="header-google-auth">Connect with Google</button>
-                    <button class="btn-secondary" id="header-email-auth">Connect with Email</button>
+                    <button class="btn-secondary" id="header-local-auth">Who's listening?</button>
                 `;
-                document.getElementById('header-google-auth').onclick = () => authManager.signInWithGoogle();
-                document.getElementById('header-email-auth').onclick = () => {
-                    document.getElementById('email-auth-modal').classList.add('active');
-                    headerAccountDropdown.classList.remove('active');
-                };
+                const localBtn = document.getElementById('header-local-auth');
+                if (localBtn) {
+                    localBtn.addEventListener('click', async (ev) => {
+                        ev.stopPropagation();
+                        console.log('[App] header-local-auth clicked');
+                        if (!authManager || typeof authManager.signInWithUsername !== 'function') {
+                            console.warn('[App] authManager not ready; attempting dynamic import');
+                            try {
+                                const mod = await import('./accounts/auth.js');
+                                if (mod && mod.authManager && typeof mod.authManager.signInWithUsername === 'function') {
+                                    await mod.authManager.signInWithUsername();
+                                } else {
+                                    console.error('[App] dynamic authManager available but method missing');
+                                }
+                            } catch (err) {
+                                console.error('[App] dynamic import failed:', err);
+                            }
+                        } else {
+                            try {
+                                await authManager.signInWithUsername();
+                            } catch (e) {
+                                console.error('[App] Local sign-in failed:', e);
+                            }
+                        }
+                        headerAccountDropdown.classList.remove('active');
+                    });
+                }
             } else {
                 const data = await syncManager.getUserData();
                 const hasProfile = data && data.profile && data.profile.username;
@@ -2901,17 +2911,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         authManager.onAuthStateChanged(async (user) => {
-            if (user) {
-                const data = await syncManager.getUserData();
-                if (data && data.profile && data.profile.avatar_url) {
-                    headerAccountImg.src = data.profile.avatar_url;
-                    headerAccountImg.style.display = 'block';
-                    headerAccountIcon.style.display = 'none';
-                    return;
+            try {
+                if (user) {
+                    const data = await syncManager.getUserData();
+                    if (data && data.profile && data.profile.avatar_url) {
+                        if (headerAccountImg) {
+                            headerAccountImg.src = data.profile.avatar_url;
+                            headerAccountImg.style.display = 'block';
+                        }
+                        if (headerAccountIcon) headerAccountIcon.style.display = 'none';
+                        return;
+                    }
                 }
+                if (headerAccountImg) headerAccountImg.style.display = 'none';
+                if (headerAccountIcon) headerAccountIcon.style.display = 'block';
+            } catch (err) {
+                console.error('[App] onAuthStateChanged error:', err);
             }
-            headerAccountImg.style.display = 'none';
-            headerAccountIcon.style.display = 'block';
         });
     }
 });

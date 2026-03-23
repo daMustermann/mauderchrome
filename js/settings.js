@@ -32,7 +32,6 @@ import {
     contentBlockingSettings,
     musicProviderSettings,
     gaplessPlaybackSettings,
-    analyticsSettings,
     modalSettings,
 } from './storage.js';
 import { audioContextManager, EQ_PRESETS } from './audio-context.js';
@@ -3066,7 +3065,7 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `monochrome-library-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `mauderchrome-library-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
     });
@@ -3114,7 +3113,7 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `monochrome-settings-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `mauderchrome-settings-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
     });
@@ -3246,14 +3245,7 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         });
     }
 
-    // Analytics Toggle
-    const analyticsToggle = document.getElementById('analytics-toggle');
-    if (analyticsToggle) {
-        analyticsToggle.checked = analyticsSettings.isEnabled();
-        analyticsToggle.addEventListener('change', (e) => {
-            analyticsSettings.setEnabled(e.target.checked);
-        });
-    }
+    // Analytics removed: no UI toggle
 
     // Reset Local Data Button
     const resetLocalDataBtn = document.getElementById('reset-local-data-btn');

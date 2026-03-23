@@ -1,12 +1,12 @@
-# Monochrome Instances
+# mauderchrome Instances
 
-This document lists public instances of Monochrome that you can use. Instances are community-hosted versions of Monochrome that provide access to the application.
+This document lists public instances of mauderchrome that you can use. Instances are community-hosted versions of mauderchrome that provide access to the application.
 
 ---
 
 ## Official Instance
 
-The official Monochrome instance maintained by the core team:
+The official mauderchrome instance maintained by the core team:
 
 | URL                                                    | Status   | Notes            |
 | ------------------------------------------------------ | -------- | ---------------- |
@@ -18,9 +18,9 @@ The official Monochrome instance maintained by the core team:
 
 ## Community Instances
 
-### Community Monochrome Instances
+### Community mauderchrome Instances
 
-These instances are community instances of Monochrome & its WebUI:
+These instances are community instances of mauderchrome & its WebUI:
 
 | Provider      | URL                                      | Status    |
 | ------------- | ---------------------------------------- | --------- |
@@ -28,7 +28,7 @@ These instances are community instances of Monochrome & its WebUI:
 
 ### UI-Only Instances
 
-These instances provide the tidal-ui web interface, not monochrome:
+These instances provide the tidal-ui web interface, not mauderchrome:
 
 | Provider      | URL                                         | Status    |
 | ------------- | ------------------------------------------- | --------- |
@@ -39,7 +39,7 @@ These instances provide the tidal-ui web interface, not monochrome:
 
 ## API Instances
 
-Monochrome uses the Hi-Fi API under the hood. Live, up-to-date status trackers (which return JSON) can be found below:
+mauderchrome uses the Hi-Fi API under the hood. Live, up-to-date status trackers (which return JSON) can be found below:
 
 - https://tidal-uptime.jiffy-puffs-1j.workers.dev/
 - https://tidal-uptime.props-76styles.workers.dev/

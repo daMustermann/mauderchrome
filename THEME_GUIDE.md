@@ -1,10 +1,10 @@
-# Monochrome Theme Creation Guide
+# mauderchrome Theme Creation Guide
 
-Welcome to the Monochrome Theme Guide! This document explains how to create, style, and upload custom themes for Monochrome.
+Welcome to the mauderchrome Theme Guide! This document explains how to create, style, and upload custom themes for mauderchrome.
 
 ## Getting Started
 
-Themes in Monochrome are essentially CSS snippets that override the default CSS variables (custom properties). You can create a theme by defining these variables inside a `:root` block.
+Themes in mauderchrome are essentially CSS snippets that override the default CSS variables (custom properties). You can create a theme by defining these variables inside a `:root` block.
 
 ### Basic Structure
 

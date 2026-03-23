@@ -443,8 +443,8 @@ class CommandPalette {
                 id: 'theme-black',
                 group: 'Theme',
                 icon: 'moon',
-                label: 'Theme: Monochrome',
-                keywords: ['theme', 'monochrome', 'black', 'dark', 'amoled'],
+                label: 'Theme: mauderchrome (Black)',
+                keywords: ['theme', 'mauderchrome', 'black', 'dark', 'amoled'],
                 action: () => this.setTheme('monochrome'),
             },
             {

@@ -7,6 +7,9 @@ import { Player } from './player.js';
 let artistsData = [];
 let artistsPopularity = new Map(); // name -> popularity score
 
+// Disable ArtistGrid network calls in local-only mode
+const DISABLE_ARTISTGRID = true;
+
 // Map to store artist info keyed by sheetId for quick lookup
 const artistBySheetId = new Map();
 
@@ -30,6 +33,7 @@ function cleanSongTitle(title) {
 }
 
 async function loadArtistsPopularity() {
+    if (DISABLE_ARTISTGRID) return;
     try {
         const response = await fetch('https://trends.artistgrid.cx');
         if (!response.ok) return;
@@ -47,6 +51,12 @@ async function loadArtistsPopularity() {
 }
 
 async function loadArtistsData() {
+    if (DISABLE_ARTISTGRID) {
+        // No remote data in local mode
+        artistsData = [];
+        artistBySheetId.clear();
+        return;
+    }
     try {
         const response = await fetch('https://assets.artistgrid.cx/artists.ndjson');
         if (!response.ok) throw new Error('Network response was not ok');
@@ -107,6 +117,7 @@ function transformErasImages(eras) {
 }
 
 async function fetchTrackerData(sheetId) {
+    if (DISABLE_ARTISTGRID) return null;
     const endpoints = [
         'https://tracker.israeli.ovh/get/',
         'https://tracker.thug.surf/get/',
@@ -731,6 +742,10 @@ export async function renderTrackerProjectPage(sheetId, projectName, container, 
 
 // Render the unreleased page with all artists
 export async function renderUnreleasedPage(container) {
+    if (DISABLE_ARTISTGRID) {
+        container.innerHTML = `<p style="text-align:center;color:var(--muted-foreground);padding:2rem;">Unreleased music feature is disabled in local mode.</p>`;
+        return;
+    }
     container.innerHTML = `
         <h2 class="section-title">Unreleased Music</h2>
         <p style="color: var(--muted-foreground); margin-bottom: 1.5rem; font-size: 0.9rem;">

@@ -47,8 +47,8 @@ export class ListenBrainzScrobbler {
         const payload = {
             artist_name: artistName,
             track_name: track.cleanTitle || track.title,
-            additional_info: {
-                submission_client: 'Monochrome',
+                additional_info: {
+                submission_client: 'mauderchrome',
                 submission_client_version: '1.0.0',
             },
         };

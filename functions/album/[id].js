@@ -16,10 +16,10 @@ class ServerAPI {
         const urls = [...this.INSTANCES_URLS].sort(() => Math.random() - 0.5);
 
         for (const url of urls) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                data = await response.json();
+                        const description = `Album by ${artist} • ${year} • ${trackCount} Tracks\nListen on mauderchrome`;
+                        const imageUrl = album.cover
+                            ? api.getCoverUrl(album.cover, '1280')
+                            : 'https://mauderchrome.samidy.com/assets/appicon.png';
                 break;
             } catch (error) {
                 console.warn(`Failed to fetch from ${url}:`, error);
@@ -31,7 +31,7 @@ class ServerAPI {
             return this.apiInstances;
         }
 
-        console.error('Failed to load instances from all uptime APIs');
+                                <meta property="og:site_name" content="mauderchrome">
         return [
             'https://eu-central.monochrome.tf',
             'https://us-west.monochrome.tf',

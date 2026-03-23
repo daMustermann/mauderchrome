@@ -2,18 +2,31 @@
 import PocketBase from 'pocketbase';
 import { db } from '../db.js';
 import { authManager } from './auth.js';
+import { localSyncManager } from './localSync.js';
 
 const PUBLIC_COLLECTION = 'public_playlists';
 const DEFAULT_POCKETBASE_URL = 'https://data.samidy.xyz';
 const POCKETBASE_URL =
     window.__POCKETBASE_URL__ || localStorage.getItem('monochrome-pocketbase-url') || DEFAULT_POCKETBASE_URL;
 
-console.log('[PocketBase] Using URL:', POCKETBASE_URL);
+// Determine whether local sync should be used (prevents remote network calls in dev/local)
+const useLocalSync =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.protocol === 'file:' ||
+    localStorage.getItem('monochrome-local-accounts') === '1' ||
+    !!window.__LOCAL_ACCOUNTS__;
 
-const pb = new PocketBase(POCKETBASE_URL);
-pb.autoCancellation(false);
+if (useLocalSync) {
+    console.log('[PocketBase] Local sync mode active — remote PocketBase disabled');
+} else {
+    console.log('[PocketBase] Using URL:', POCKETBASE_URL);
+}
 
-const syncManager = {
+const pb = !useLocalSync ? new PocketBase(POCKETBASE_URL) : null;
+if (pb) pb.autoCancellation(false);
+
+const pbSyncManager = {
     pb: pb,
     _userRecordCache: null,
     _getUserRecordPromise: null,
@@ -25,7 +38,7 @@ const syncManager = {
         if (this._userRecordCache && this._userRecordCache.firebase_id === uid) {
             return this._userRecordCache;
         }
-
+        // If a previous request for this uid is in-flight, reuse its promise
         if (this._getUserRecordPromise && this._getUserRecordPromise.uid === uid) {
             return this._getUserRecordPromise.promise;
         }
@@ -701,7 +714,9 @@ const syncManager = {
     },
 };
 
-if (pb) {
+const syncManager = useLocalSync ? localSyncManager : pbSyncManager;
+
+if (pb && authManager && typeof syncManager.onAuthStateChanged === 'function') {
     authManager.onAuthStateChanged(syncManager.onAuthStateChanged.bind(syncManager));
 }
 

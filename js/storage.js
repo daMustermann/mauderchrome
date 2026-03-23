@@ -1767,27 +1767,13 @@ export const radioSettings = {
     },
 };
 
-export const analyticsSettings = {
-    ENABLED_KEY: 'analytics-enabled',
-
-    isEnabled() {
-        try {
-            const val = localStorage.getItem(this.ENABLED_KEY);
-            return val === null ? true : val === 'true';
-        } catch {
-            return true;
-        }
-    },
-
-    setEnabled(enabled) {
-        localStorage.setItem(this.ENABLED_KEY, enabled ? 'true' : 'false');
-    },
-};
+ 
 
 export const sidebarSectionSettings = {
     SHOW_HOME_KEY: 'sidebar-show-home',
     SHOW_LIBRARY_KEY: 'sidebar-show-library',
     SHOW_RECENT_KEY: 'sidebar-show-recent',
+    // Unreleased feature disabled in local-only builds
     SHOW_UNRELEASED_KEY: 'sidebar-show-unreleased',
     SHOW_DONATE_KEY: 'sidebar-show-donate',
     SHOW_SETTINGS_KEY: 'sidebar-show-settings',
@@ -1800,13 +1786,7 @@ export const sidebarSectionSettings = {
         'sidebar-nav-home',
         'sidebar-nav-library',
         'sidebar-nav-recent',
-        'sidebar-nav-unreleased',
-        'sidebar-nav-donate',
         'sidebar-nav-settings',
-        'sidebar-nav-about-bottom',
-        'sidebar-nav-download-bottom',
-        'sidebar-nav-discordbtn',
-        'sidebar-nav-githubbtn',
     ],
 
     getBottomNavIds() {
@@ -1998,13 +1978,7 @@ export const sidebarSectionSettings = {
             { id: 'sidebar-nav-home', check: this.shouldShowHome() },
             { id: 'sidebar-nav-library', check: this.shouldShowLibrary() },
             { id: 'sidebar-nav-recent', check: this.shouldShowRecent() },
-            { id: 'sidebar-nav-unreleased', check: this.shouldShowUnreleased() },
-            { id: 'sidebar-nav-donate', check: this.shouldShowDonate() },
             { id: 'sidebar-nav-settings', check: this.shouldShowSettings() },
-            { id: 'sidebar-nav-about-bottom', check: this.shouldShowAbout() },
-            { id: 'sidebar-nav-download-bottom', check: this.shouldShowDownload() },
-            { id: 'sidebar-nav-discordbtn', check: this.shouldShowDiscord() },
-            { id: 'sidebar-nav-githubbtn', check: this.shouldShowGithub() },
         ];
 
         items.forEach(({ id, check }) => {

@@ -1,284 +1,57 @@
- <p align="center">
-  <a href="https://monochrome.tf">
-    <img src="https://github.com/monochrome-music/monochrome/blob/main/public/assets/512.png?raw=true" alt="Monochrome Logo" width="150px">
-  </a>
-</p>
-
-<h1 align="center">Monochrome</h1>
-
-<p align="center">
-  <strong>An open-source, privacy-respecting, ad-free music app.</strong>
-</p>
+**mauderchrome — Einfache Anleitung für Windows 11 (ohne Docker)**
 
-<p align="center">
-  <a href="https://monochrome.tf">Website</a> -
-  <a href="https://ko-fi.com/monochromemusic">Donate</a> -
-  <a href="#features">Features</a> -
-  <a href="#usage">Usage</a> -
-  <a href="#self-hosting">Self-Hosting</a> -
-  <a href="CONTRIBUTING.md">Contributing</a>
-</p>
+Dieses Repository enthält die Web‑UI einer Open‑Source‑Musik‑App. Die Anleitung hier erklärt die einfachste Methode, die App lokal auf Windows 11 zu starten — ohne Docker und so, dass auch Laien folgen können.
 
-<p align="center">
-  <a href="https://github.com/monochrome-music/monochrome/stargazers">
-    <img src="https://img.shields.io/github/stars/monochrome-music/monochrome?style=for-the-badge&color=ffffff&labelColor=000000" alt="GitHub stars">
-  </a>
-  <a href="https://github.com/monochrome-music/monochrome/forks">
-    <img src="https://img.shields.io/github/forks/monochrome-music/monochrome?style=for-the-badge&color=ffffff&labelColor=000000" alt="GitHub forks">
-  </a>
-  <a href="https://github.com/monochrome-music/monochrome/issues">
-    <img src="https://img.shields.io/github/issues/monochrome-music/monochrome?style=for-the-badge&color=ffffff&labelColor=000000" alt="GitHub issues">
-  </a>
-</p>
+**Voraussetzungen (empfohlen):**
+- **Bun**: Empfohlen. Installiere Bun von https://bun.sh/ — Bun ist schnell und vereinheitlicht `install`/`run` Befehle.
+- **Node.js** (optional): Falls du Bun nicht nutzen möchtest, funktioniert auch Node.js (Version 18+).
+- **Git** (optional): Für das Klonen des Repositories. Alternativ kannst du das ZIP von GitHub herunterladen.
 
----
+**Schritt für Schritt (sehr einfach)**
+1. Repository herunterladen:
 
-## What is Monochrome?
+   - Mit Git: `git clone https://github.com/monochrome-music/monochrome.git`
+   - Oder lade die ZIP von der GitHub‑Seite herunter und entpacke sie.
 
-**Monochrome** is an open-source, privacy-respecting, ad-free [TIDAL](https://tidal.com) web UI, built on top of Hi-Fi. It provides a beautiful, minimalist interface for streaming high-quality music without the clutter of traditional streaming platforms.
+2. In das Projektverzeichnis wechseln:
 
-<p align="center">
-  <a href="https://monochrome.tf/album/90502209">
-    <img width="2559" height="1439" alt="Image of 'NASIR' By Nas On Monochrome" src="https://i.samidy.xyz/NASIR.png"  alt="Monochrome UI" width="800">
-  </a>
-</p>
+   - `cd monochrome`
 
-<p align="center">
-  <a href="https://monochrome.tf/album/413189044">
-    <img width="2559" height="1439" alt="Image of 'Jump Out' By Osamason On Monochrome" src="https://i.samidy.xyz/jumpout.png"  alt="Monochrome UI" width="800">
-  </a>
-</p>
+3. Abhängigkeiten installieren (einfachste Variante mit Bun):
 
----
+   - Mit Bun (empfohlen): `bun install`
+   - Alternative mit NPM: `npm install`
 
-## Features
+4. Entwicklungsserver starten:
 
-### Audio Quality
+   - Mit Bun (empfohlen): `bun run dev`
+   - Alternative mit NPM: `npm run dev`
 
-- High-quality High-Res/lossless audio streaming
-- Support for local music files
-- API caching for improved performance
+5. Im Browser öffnen:
 
-### Interface
+   - Öffne `http://localhost:5173` in deinem Webbrowser.
 
-- Dark, minimalist interface optimized for focus
-- Animated Album Covers For Supported Albums
-- High-quality Music Videos
-- Customizable themes & Community Theme Store
-- Accurate and unique audio visualizer
-- Offline-capable Progressive Web App (PWA)
-- Media Session API integration for system controls
+Das ist alles — die App sollte jetzt im Browser laufen und ihr könnt Musik suchen und abspielen.
 
-### Library & Organization
+**Wenn etwas nicht klappt (kurze Hilfe)**
+- Prüfe, ob Bun korrekt installiert ist: `bun -v` sollte eine Versionsnummer anzeigen.
+- Falls du NPM benutzt: `node -v` und `npm -v` zeigen die Versionen an.
+- Falls `bun install`/`npm install` Fehler zeigt: versuche `npm ci` oder `npm install --legacy-peer-deps`.
+- Firewall/Antivirus: Erlaube lokalen Zugriff auf den Port 5173, falls der Browser keine Verbindung herstellen kann.
+- Port belegt: Wenn 5173 bereits verwendet wird, startet Vite normalerweise auf einem anderen Port; schau in die Konsolenausgabe nach der genauen URL.
 
-- Recently Played tracking for easy history access
-- Comprehensive Personal Library for favorites
-- 5-star track rating system with per-track persistence
-- Queue management with shuffle and repeat modes
-- Playlist import from other platforms
-- Public playlists for social sharing
-- Smart recommendations for new songs, albums & artists
-- Infinite Recommendation Radio
-- Explore Page (Hot & New) for discovering newly added music and whats trending overall or within each genre
+**Produktion / lokal testen (optional)**
+- Produktion bauen (Bun): `bun run build`
+- Vorschau lokal anzeigen (Bun): `bun run preview` (öffnet einen lokalen Server für die gebaute Version)
 
-### Lyrics & Metadata
+Wenn du NPM verwendest, funktionieren die üblichen `npm run build` / `npm run preview` Befehle ebenso.
 
-- Lyrics support with karaoke mode
-- Genius integration for lyrics
-- Track downloads with automatic metadata embedding
+**Kurz: Wie benutze ich die App?**
+- Suche nach Künstlern, Alben oder Titeln in der Suchleiste.
+- Klick auf Play, um Musik zu hören.
+- Nutze die Player‑Steuerung (laut, leise, vor/ zurück, Warteschlange).
 
-### Integrations
+**Weitere Hilfe / Support**
+- Für Fragen oder Probleme erstelle ein Issue auf GitHub: https://github.com/monochrome-music/monochrome/issues
 
-- Account system for cross-device syncing
-- Customizable & Public Profiles
-- Last.fm and ListenBrainz integration for scrobbling
-- Unreleased music from [ArtistGrid](https://artistgrid.cx)
-- Dynamic Discord Embeds
-- Artist Biography + Social Links for learning more about your favorite artists
-- Multiple API instance support with failover
-
-### Power User Features
-
-- Keyboard shortcuts & Command Palette (CTRL+K) for power users
-
----
-
-## Quick Start
-
-### Live Instance
-
-Our Recommended way to use monochrome is through our official instance:
-
-**[monochrome.tf](https://monochrome.tf)** / **[monochrome.samidy.com](https://monochrome.samidy.com)**
-
-For alternative instances, check [INSTANCES.md](INSTANCES.md).
-
----
-
-## Self-Hosting
-
-NOTE: Accounts will not work on self-hosted instances. Our Appwrite authentication system only allows authorized domains.
-
-We had to heavily customize the authentication system and write several custom scripts to support features like SMTP and Google OAuth (which are currently bugged in Appwrite). Because of this, we can no longer provide a self-hostable accounts system.
-
-### Option 1: Docker (Recommended)
-
-```bash
-git clone https://github.com/monochrome-music/monochrome.git
-cd monochrome
-docker compose up -d
-```
-
-Visit `http://localhost:3000`
-
-### Tailscale Access
-
-Visit `http://<tailscale_server_hostname_or_ip>:3000`
-
-By default, the app uses Vite preview, which restricts access to localhost.  
-To allow access over Tailscale:
-
-1. Open `vite.config.js`
-
-2. Uncomment and configure the `preview` section:
-
-```js
-preview: {
-    host: true,
-    allowedHosts: ['<your_tailscale_hostname>'], // e.g. pi5.tailf5f622.ts.net
-},
-```
-
-3. Restart with a fresh container (if already running):
-
-```bash
-docker compose down
-docker compose up -d
-```
-
-For development mode and advanced setups, see [DOCKER.md](DOCKER.md).
-
-### Option 2: Manual Installation
-
-#### Prerequisites
-
-- [Bun](https://bun.sh/) (Preferred) or [Node.js](https://nodejs.org/) (Version 20+ or 22+ recommended)
-
-#### Local Development
-
-1. **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/monochrome-music/monochrome.git
-    cd monochrome
-    ```
-
-2. **Install dependencies:**
-
-    ```bash
-    bun install
-    # or
-    npm install # NPM is included with Node.js
-    ```
-
-3. **Start the development server:**
-
-    ```bash
-    bun run dev
-    # or
-    npm run dev
-    ```
-
-4. **Open your browser:**
-   Navigate to `http://localhost:5173/`
-
-#### Building for Production
-
-```bash
-bun run build
-# or
-npm run build
-```
-
----
-
-## Usage
-
-### Basic Usage
-
-1. Visit the [Website](https://monochrome.tf) or your local development server
-2. Search for your favorite artists, albums, or tracks
-3. Click play to start streaming
-4. Use the media controls to manage playback, queue, and volume
-
-### Keyboard Shortcuts
-
-| Shortcut      | Action                       |
-| ------------- | ---------------------------- |
-| `Space`       | Play / Pause                 |
-| `→`           | Seek forward 10s             |
-| `←`           | Seek backward 10s            |
-| `Shift` + `→` | Next track                   |
-| `Shift` + `←` | Previous track               |
-| `↑`           | Volume up                    |
-| `↓`           | Volume down                  |
-| `M`           | Mute / Unmute                |
-| `S`           | Toggle shuffle               |
-| `R`           | Toggle repeat                |
-| `Q`           | Open queue                   |
-| `L`           | Toggle lyrics                |
-| `/`           | Focus search                 |
-| `Esc`         | Close modals                 |
-| `[`           | Previous visualizer preset   |
-| `]`           | Next visualizer preset       |
-| `\`           | Toggle visualizer auto-cycle |
-| `Ctrl` + `K`  | Command Palette              |
-
-### Account Features
-
-To sync your library, history, and playlists across devices:
-
-1. Click the "Accounts" Section
-2. Sign in with Google or Email
-3. Your data will automatically sync across all devices
-
----
-
-## Contributing
-
-We welcome contributions from the community! Please see our [Contributing Guide](CONTRIBUTING.md) for:
-
-- Setting up your development environment
-- Code style and linting
-- Project structure
-- Before You Contribute
-- Commit message conventions
-- Deployment information
-
----
-
-<p align="center">
-  <a href="https://fmhy.net/audio#streaming-sites">
-    <img src="https://raw.githubusercontent.com/monochrome-music/monochrome/refs/heads/main/public/assets/asseenonfmhy880x310.png" alt="As seen on FMHY" height="50">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://notbyai.fyi">
-    <img src="https://i.samidy.xyz/Developed-By-Humans-Not-By-AI-Badge-black%402x.png" alt="Developed by Humans" height="50">
-  </a>
-</p>
-
-<p align="center">
-  Made with ❤️ by the Monochrome team
-</p>
-
-## Star History
-
-<a href="https://www.star-history.com/#monochrome-music/monochrome&type=date&logscale&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=monochrome-music/monochrome&type=date&theme=dark&logscale&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=monochrome-music/monochrome&type=date&logscale&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=monochrome-music/monochrome&type=date&logscale&legend=top-left" />
- </picture>
-</a>
+Viel Spaß — die obigen Schritte reichen für einen einfachen lokalen Start unter Windows 11 ohne Docker.

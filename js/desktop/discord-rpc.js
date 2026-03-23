@@ -13,11 +13,11 @@ export function initializeDiscordRPC(player) {
             coverUrl = `https://resources.tidal.com/images/${coverId}/320x320.jpg`;
         }
 
-        const data = {
+            const data = {
             details: getTrackTitle(track),
             state: getTrackArtists(track),
             largeImageKey: coverUrl,
-            largeImageText: track.album?.title || 'Monochrome',
+            largeImageText: track.album?.title || 'mauderchrome',
             smallImageKey: isPaused ? 'pause' : 'play',
             smallImageText: isPaused ? 'Paused' : 'Playing',
             instance: false,
@@ -59,9 +59,9 @@ export function initializeDiscordRPC(player) {
         Neutralino.events
             .broadcast('discord:update', {
                 details: 'Idling',
-                state: 'Monochrome',
+                state: 'mauderchrome',
                 largeImageKey: 'monochrome',
-                largeImageText: 'Monochrome',
+                largeImageText: 'mauderchrome',
                 smallImageKey: 'pause',
                 smallImageText: 'Paused',
             })

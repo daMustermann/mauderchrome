@@ -1,0 +1,38 @@
+{
+  "console": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "log",
+      "text": "[PocketBase] Local sync mode active — remote PocketBase disabled"
+    },
+    {
+      "type": "log",
+      "text": "[Butterchurn] Presets loaded, type: function"
+    },
+    {
+      "type": "log",
+      "text": "[Butterchurn] Module-level presets loaded: 58"
+    },
+    {
+      "type": "log",
+      "text": "[Settings] Butterchurn presets loaded event received"
+    },
+    {
+      "type": "log",
+      "text": "[App] header-local-auth clicked"
+    }
+  ],
+  "pageErrors": [],
+  "modalFound": true,
+  "localStorage": {
+    "usersRaw": "{\"testuser\":{\"username\":\"testuser\",\"display_name\":\"testuser\",\"avatar_url\":\"/assets/appicon.png\"}}",
+    "current": "testuser"
+  }
+}

@@ -60,85 +60,6 @@ export async function initializeSettings(scrobbler, player, api, ui) {
     // Initialize account system UI & Settings
     authManager.updateUI(authManager.user);
 
-    // Email Auth UI Logic
-    const toggleEmailBtn = document.getElementById('toggle-email-auth-btn');
-    const cancelEmailBtn = document.getElementById('cancel-email-auth-btn');
-    const authModal = document.getElementById('email-auth-modal');
-    const emailInput = document.getElementById('auth-email');
-    const passwordInput = document.getElementById('auth-password');
-    const signInBtn = document.getElementById('email-signin-btn');
-    const signUpBtn = document.getElementById('email-signup-btn');
-    const resetPasswordBtn = document.getElementById('reset-password-btn');
-
-    if (toggleEmailBtn && authModal) {
-        toggleEmailBtn.addEventListener('click', () => {
-            authModal.classList.add('active');
-        });
-    }
-
-    if (cancelEmailBtn && authModal) {
-        cancelEmailBtn.addEventListener('click', () => {
-            authModal.classList.remove('active');
-        });
-
-        authModal.querySelector('.modal-overlay').addEventListener('click', () => {
-            authModal.classList.remove('active');
-        });
-    }
-
-    if (signInBtn) {
-        signInBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                alert('Please enter both email and password.');
-                return;
-            }
-            try {
-                await authManager.signInWithEmail(email, password);
-                authModal.classList.remove('active');
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch {
-                // Error handled in authManager
-            }
-        });
-    }
-
-    if (signUpBtn) {
-        signUpBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                alert('Please enter both email and password.');
-                return;
-            }
-            try {
-                await authManager.signUpWithEmail(email, password);
-                authModal.classList.remove('active');
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch {
-                // Error handled in authManager
-            }
-        });
-    }
-
-    if (resetPasswordBtn) {
-        resetPasswordBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            if (!email) {
-                alert('Please enter your email address to reset your password.');
-                return;
-            }
-            try {
-                await authManager.sendPasswordReset(email);
-            } catch {
-                /* ignore */
-            }
-        });
-    }
-
     const lastfmConnectBtn = document.getElementById('lastfm-connect-btn');
     const lastfmStatus = document.getElementById('lastfm-status');
     const lastfmToggle = document.getElementById('lastfm-toggle');
@@ -3043,31 +2964,38 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         }
     });
 
-    document.getElementById('auth-clear-cloud-btn')?.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to delete ALL your data from the cloud? This cannot be undone.')) {
+    document.getElementById('auth-clear-server-btn')?.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete ALL your data from the server? This cannot be undone.')) {
             try {
-                await syncManager.clearCloudData();
-                alert('Cloud data cleared successfully.');
-                authManager.signOut();
+                if (syncManager && typeof syncManager.clearServerData === 'function') {
+                    await syncManager.clearServerData();
+                }
+                alert('Server data cleared successfully.');
             } catch (error) {
-                console.error('Failed to clear cloud data:', error);
-                alert('Failed to clear cloud data: ' + error.message);
+                console.error('Failed to clear server data:', error);
+                alert('Failed to clear server data: ' + error.message);
             }
         }
     });
 
     // Backup & Restore
-    document.getElementById('export-library-btn')?.addEventListener('click', async () => {
-        const data = await db.exportData();
+    const downloadLibraryBackup = (data, suffix = '') => {
         const blob = new Blob([JSON.stringify(data, null, 2)], {
             type: 'application/json',
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `mauderchrome-library-${new Date().toISOString().split('T')[0]}.json`;
+        const datePart = new Date().toISOString().replace(/[:.]/g, '-');
+        const suffixPart = suffix ? `-${suffix}` : '';
+        a.download = `mauderchrome-library-${datePart}${suffixPart}.json`;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('export-library-btn')?.addEventListener('click', async () => {
+        const data = await db.exportData();
+        downloadLibraryBackup(data);
     });
 
     const importInput = document.getElementById('import-library-input');
@@ -3082,13 +3010,55 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                const data = JSON.parse(event.target.result);
-                await db.importData(data);
+                const parsed = JSON.parse(event.target.result);
+                const normalized = {
+                    favorites_tracks: parsed.favorites_tracks || [],
+                    favorites_albums: parsed.favorites_albums || [],
+                    favorites_artists: parsed.favorites_artists || [],
+                    favorites_playlists: parsed.favorites_playlists || [],
+                    favorites_mixes: parsed.favorites_mixes || [],
+                    history_tracks: parsed.history_tracks || [],
+                    user_playlists: parsed.user_playlists || [],
+                    user_folders: parsed.user_folders || [],
+                    track_ratings: parsed.track_ratings || [],
+                };
+
+                const previewLines = [
+                    `Track favorites: ${normalized.favorites_tracks.length}`,
+                    `Album favorites: ${normalized.favorites_albums.length}`,
+                    `Artist favorites: ${normalized.favorites_artists.length}`,
+                    `Playlist favorites: ${normalized.favorites_playlists.length}`,
+                    `Mix favorites: ${normalized.favorites_mixes.length}`,
+                    `History entries: ${normalized.history_tracks.length}`,
+                    `User playlists: ${normalized.user_playlists.length}`,
+                    `User folders: ${normalized.user_folders.length}`,
+                    `Track ratings: ${normalized.track_ratings.length}`,
+                ];
+
+                const proceed = confirm(
+                    `Import preview for "${file.name}":\n\n${previewLines.join('\n')}\n\nThis will replace your current local and synced library state. Continue?`
+                );
+                if (!proceed) return;
+
+                const createSafetyBackup = confirm(
+                    'Create a safety backup of your current library before import? (Recommended)'
+                );
+                if (createSafetyBackup) {
+                    const currentData = await db.exportData();
+                    downloadLibraryBackup(currentData, 'pre-import-backup');
+                }
+
+                await db.importData(normalized, true);
+                if (syncManager && typeof syncManager.replaceServerDataWithLocalData === 'function') {
+                    await syncManager.replaceServerDataWithLocalData();
+                }
                 alert('Library imported successfully!');
                 window.location.reload(); // Simple way to refresh all state
             } catch (err) {
                 console.error('Import failed:', err);
                 alert('Failed to import library. Please check the file format.');
+            } finally {
+                importInput.value = '';
             }
         };
         reader.readAsText(file);
@@ -3150,39 +3120,19 @@ export async function initializeSettings(scrobbler, player, api, ui) {
     const customDbBtn = document.getElementById('custom-db-btn');
     const customDbModal = document.getElementById('custom-db-modal');
     const customPbUrlInput = document.getElementById('custom-pb-url');
-    const customAppwriteEndpointInput = document.getElementById('custom-appwrite-endpoint');
-    const customAppwriteProjectInput = document.getElementById('custom-appwrite-project');
     const customDbSaveBtn = document.getElementById('custom-db-save');
     const customDbResetBtn = document.getElementById('custom-db-reset');
     const customDbCancelBtn = document.getElementById('custom-db-cancel');
 
     if (customDbBtn && customDbModal) {
-        const appwriteFromEnv = !!(window.__APPWRITE_ENDPOINT__ || window.__APPWRITE_PROJECT_ID__);
         const pbFromEnv = !!window.__POCKETBASE_URL__;
-
-        // Hide entire setting if both are server-configured
-        if (appwriteFromEnv && pbFromEnv) {
-            const settingItem = customDbBtn.closest('.setting-item');
-            if (settingItem) settingItem.style.display = 'none';
-        }
 
         // Hide individual fields in the modal
         if (pbFromEnv && customPbUrlInput) customPbUrlInput.closest('div[style]').style.display = 'none';
-        if (appwriteFromEnv) {
-            if (customAppwriteEndpointInput) customAppwriteEndpointInput.closest('div[style]').style.display = 'none';
-            if (customAppwriteProjectInput) customAppwriteProjectInput.closest('div[style]').style.display = 'none';
-        }
 
         customDbBtn.addEventListener('click', () => {
             const pbUrl = localStorage.getItem('monochrome-pocketbase-url') || '';
-            const appwriteEndpoint = localStorage.getItem('monochrome-appwrite-endpoint') || '';
-            const appwriteProject = localStorage.getItem('monochrome-appwrite-project') || '';
-
             if (!pbFromEnv && customPbUrlInput) customPbUrlInput.value = pbUrl;
-            if (!appwriteFromEnv) {
-                if (customAppwriteEndpointInput) customAppwriteEndpointInput.value = appwriteEndpoint;
-                if (customAppwriteProjectInput) customAppwriteProjectInput.value = appwriteProject;
-            }
 
             customDbModal.classList.add('active');
         });
@@ -3204,23 +3154,6 @@ export async function initializeSettings(scrobbler, player, api, ui) {
                 }
             }
 
-            if (!appwriteFromEnv) {
-                const endpoint = customAppwriteEndpointInput?.value.trim();
-                const project = customAppwriteProjectInput?.value.trim();
-
-                if (endpoint) {
-                    localStorage.setItem('monochrome-appwrite-endpoint', endpoint);
-                } else {
-                    localStorage.removeItem('monochrome-appwrite-endpoint');
-                }
-
-                if (project) {
-                    localStorage.setItem('monochrome-appwrite-project', project);
-                } else {
-                    localStorage.removeItem('monochrome-appwrite-project');
-                }
-            }
-
             alert('Settings saved. Reloading...');
             window.location.reload();
         });
@@ -3228,8 +3161,6 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         customDbResetBtn.addEventListener('click', () => {
             if (confirm('Reset custom database settings to default?')) {
                 localStorage.removeItem('monochrome-pocketbase-url');
-                localStorage.removeItem('monochrome-appwrite-endpoint');
-                localStorage.removeItem('monochrome-appwrite-project');
                 alert('Settings reset. Reloading...');
                 window.location.reload();
             }
@@ -3253,7 +3184,7 @@ export async function initializeSettings(scrobbler, player, api, ui) {
         resetLocalDataBtn.addEventListener('click', async () => {
             if (
                 confirm(
-                    'WARNING: This will clear all local data including settings, cache, and library.\n\nAre you sure you want to continue?\n\n(Cloud-synced data will not be affected)'
+                    'WARNING: This will clear all local data including settings, cache, and library.\n\nAre you sure you want to continue?\n\n(Server data will not be affected)'
                 )
             ) {
                 try {

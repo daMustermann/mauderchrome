@@ -10,6 +10,8 @@
         "build:desktop": "bun x neu build",
         "postbuild": "node -e \"const fs = require('fs'); const path = require('path'); const src = 'extensions'; const dest = path.join('dist', 'mauderchrome', 'extensions'); if (fs.existsSync(src)) { fs.mkdirSync(dest, { recursive: true }); fs.cpSync(src, dest, { recursive: true }); console.log('Extensions manually copied to ' + dest); }\"",
         "preview": "vite preview",
+        "sync:server": "bun server/sync-server.js",
+        "migrate:single-user": "node scripts/migrate-single-user-record.js",
         "lint:js": "eslint .",
         "lint:css": "stylelint \"**/*.css\"",
         "lint:html": "htmlhint \"**/*.html\" --ignore=\"dist/**,legacy/**,node_modules/**\"",

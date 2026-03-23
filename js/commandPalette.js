@@ -680,12 +680,12 @@ class CommandPalette {
             {
                 id: 'acc-sign-out',
                 group: 'Account',
-                icon: 'logOut',
-                label: 'Sign Out',
-                keywords: ['sign out', 'log out', 'logout', 'disconnect'],
+                icon: 'user',
+                label: 'Set Instance User',
+                keywords: ['instance', 'single user', 'username', 'account'],
                 action: async () => {
                     const { authManager } = await import('./accounts/auth.js');
-                    await authManager.signOut();
+                    await authManager.signInWithUsername();
                 },
             },
             {

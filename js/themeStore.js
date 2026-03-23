@@ -91,7 +91,7 @@ export class ThemeStore {
 
         document.getElementById('theme-store-login-btn')?.addEventListener('click', () => {
             this.modal.classList.remove('active');
-            document.getElementById('email-auth-modal')?.classList.add('active');
+            authManager.signInWithUsername();
         });
 
         document.getElementById('theme-upload-cancel-edit')?.addEventListener('click', () => {

@@ -96,15 +96,15 @@ Override files can extend existing services (add labels, env vars, networks) and
 
 The application is configured via environment variables. Copy `.env.example` to `.env` and edit it to match your setup.
 
-### Authentication (Appwrite)
+### Authentication Model
 
-Monochrome uses Appwrite for user authentication. While it defaults to official instances, you can use your own self-hosted Appwrite instance:
+Monochrome now runs in **single-user mode per instance**:
 
-1. Create a project in Appwrite.
-2. Enable the **Google** or **Email/Password** providers in the Appwrite Console.
-3. Set these variables in your `.env`:
-    - `APPWRITE_ENDPOINT`: Your Appwrite API endpoint (e.g., `https://auth.yourdomain.com/v1`).
-    - `APPWRITE_PROJECT_ID`: Your Appwrite project ID (e.g., `auth-for-monochrome`).
+- No multiuser login
+- No password database
+- No Appwrite dependency for auth
+
+The user identity is local to the instance and can be renamed from inside the app.
 
 ### Database (PocketBase)
 
@@ -117,6 +117,38 @@ docker compose --profile pocketbase up -d
 #### PocketBase Schema Note
 
 If you are setting up a new PocketBase collection for user data, ensure it has a field named `firebase_id` (this is a legacy name we use when we first started the accounts system, we used firebase. and im too lazy to change it so yea fuck you).
+
+### Migrating Existing Multi-Record Data To Single-User
+
+If you have old data spread across multiple `DB_users` records, you can merge everything into one persistent single-user server record:
+
+```bash
+PB_URL=http://127.0.0.1:8090 \
+PB_ADMIN_EMAIL=admin@example.com \
+PB_ADMIN_PASSWORD=changeme \
+BACKEND_USER_KEY=single-user-instance \
+node scripts/migrate-single-user-record.js
+```
+
+This runs in **dry-run** mode by default. To apply:
+
+```bash
+PB_URL=http://127.0.0.1:8090 \
+PB_ADMIN_EMAIL=admin@example.com \
+PB_ADMIN_PASSWORD=changeme \
+BACKEND_USER_KEY=single-user-instance \
+node scripts/migrate-single-user-record.js --apply
+```
+
+To also delete old source records after merge:
+
+```bash
+PB_URL=http://127.0.0.1:8090 \
+PB_ADMIN_EMAIL=admin@example.com \
+PB_ADMIN_PASSWORD=changeme \
+BACKEND_USER_KEY=single-user-instance \
+node scripts/migrate-single-user-record.js --apply --delete-sources
+```
 
 ---
 
